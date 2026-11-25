@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HatchProof · 排线试片台</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='hatchproof.css') }}">
+  <script defer src="{{ url_for('static', filename='hatchproof.js') }}"></script>
+</head>
+<body>
+<header class="masthead">
+  <a class="brand" href="/"><i aria-hidden="true"></i> HatchProof</a>
+  <span class="mast-label">排线试片台</span>
+  <a class="external" href="/prepare">照片准备 ↗</a>
+</header>
+<main>
+  <section class="introduction">
+    <div><h1>原稿排线方向测量</h1><p>从排线原稿照片检查实际局部笔向和测量框的方向分布。</p></div>
+    <div class="top-actions">
+      <button id="practice" class="primary" type="button">打开练习排线</button>
+      <button id="open-import" type="button">导入原片</button>
+    </div>
+  </section>
+  <p id="notice" class="notice" role="status" hidden></p>
+  <section class="library">
+    <label for="library">排线卡</label>
+    <select id="library"><option value="">选取已存卡片</option></select>
+    <span id="origin"></span>
+  </section>
+  <section id="empty" class="empty">
+    <div class="hatch-icon" aria-hidden="true"><i></i></div>
+    <h2>选择一张排线原照</h2>
+    <p>从画稿选一处排线和截线，用周围实拍像素判断方向。</p>
+  </section>
+  <section id="workspace" class="workspace" hidden>
+    <div class="left">
+      <section class="panel source">
+        <div class="panel-head">
+          <div><h2 id="card-title">原片</h2><span id="dimensions"></span></div>
+          <div class="modes" role="group" aria-label="原照取样">
+            <button id="probe-mode" data-mode="probe" aria-pressed="true" type="button">点读</button>
+            <button id="mark-mode" data-mode="mark" aria-pressed="false" type="button">取截线</button>
+          </div>
+        </div>
+        <div class="camera"><canvas id="capture" aria-label="排线原照，可点击取样或输入原片像素坐标"></canvas></div>
+        <div class="probe">
+          <b>原片点读</b>
+          <form id="probe-form"><label>X <input id="probe-x" type="number" min="0" step="1" required></label>
+            <label>Y <input id="probe-y" type="number" min="0" step="1" required></label>
+            <button type="submit">读取</button></form>
+          <span id="probe-result">选择原片像素</span>
+        </div>
+      </section>
+      <section class="panel profile">
+        <div class="panel-head">
+          <div><h2 id="chart-title">原行方向证据</h2><span id="chart-caption">当前截线 · 笔向角 · 原片 X</span></div>
+          <div class="modes" role="group" aria-label="当前图表">
+            <button data-chart="profile" aria-pressed="true" type="button">截线证据</button>
+            <button data-chart="coverage" aria-pressed="false" type="button">全框方向</button>
+          </div>
+        </div>
+        <canvas id="chart" width="850" height="166" aria-label="截线方向与全框分布"></canvas>
+      </section>
+    </div>
+    <aside class="right">
+      <section class="panel readout">
+        <div class="panel-head"><h2>当前行主要笔向</h2><span id="measurement-state"></span></div>
+        <div class="direction"><strong id="direction-value">—</strong><span id="direction-unit"></span></div>
+        <p id="selected-level"></p><p id="area-level"></p>
+      </section>
+      <form id="calibration" class="panel settings">
+        <div class="panel-head"><div><h2>框与方向取样</h2><span>原片坐标 · 水平 0°，竖直 90°</span></div></div>
+        <label class="wide">卡片名称<input id="name" maxlength="80" required></label>
+        <fieldset><legend>原片测量框 · px</legend><div class="form-grid">
+          <label>左界 X<input data-setting="left" type="number" step="1" min="0" required></label>
+          <label>右界 X<input data-setting="right" type="number" step="1" min="0" required></label>
+          <label>截线 Y<input data-setting="focus" type="number" step="1" min="0" required></label>
+          <label>上界 Y<input data-setting="top" type="number" step="1" min="0" required></label>
+          <label>下界 Y<input data-setting="bottom" type="number" step="1" min="0" required></label>
+        </div></fieldset>
+        <fieldset><legend>方向取样阈值</legend><div class="form-grid">
+          <label>最小纹理强度<input data-setting="cutoff" type="number" step="any" min="0.1" max="180" required></label>
+        </div></fieldset>
+        <button id="save" class="primary" type="submit">保存并测量</button>
+      </form>
+      <section class="panel outputs">
+        <div class="panel-head"><h2>图像交接</h2></div>
+        <div><a id="proof" download>PNG 校样 ↓</a><a id="csv" download>CSV 读数 ↓</a><a id="zip" download>ZIP 排线卡 ↓</a></div>
+        <button id="prepare" type="button">将原片送入照片准备 ↗</button>
+      </section>
+    </aside>
+  </section>
+</main>
+<dialog id="import">
+  <form id="upload">
+    <h2>导入排线原照</h2>
+    <label>排线卡名称<input name="name" maxlength="80" required></label>
+    <label>照片<input name="photo" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/tiff" required></label>
+    <p id="import-notice" role="status"></p>
+    <div class="top-actions"><button id="cancel-import" type="button">取消</button><button class="primary" type="submit">建立排线卡</button></div>
+  </form>
+</dialog>
+</body>
+</html>
