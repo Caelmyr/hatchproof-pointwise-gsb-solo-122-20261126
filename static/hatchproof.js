@@ -48,6 +48,12 @@ async function library() {
   select.value = state.card?.id || "";
 }
 
+const GROUP_COLORS = ["#744fa4", "#1f8079"];
+
+function groupColor(group) {
+  return group ? GROUP_COLORS[(group - 1) % GROUP_COLORS.length] : "#b3a9b6";
+}
+
 function paintSource() {
   const canvas = get("capture");
   const ctx = canvas.getContext("2d");
@@ -62,22 +68,20 @@ function paintSource() {
   ctx.setLineDash([5,5]);
   ctx.strokeRect(cfg.left,cfg.top,cfg.right-cfg.left,cfg.bottom-cfg.top);
   ctx.setLineDash([]);
-  if (result.profile.length) {
+  if (result.row.length) {
     ctx.strokeStyle = "#ba8270";
     ctx.beginPath();
     ctx.moveTo(cfg.left,result.focus);
     ctx.lineTo(cfg.right,result.focus);
     ctx.stroke();
   }
-  ctx.strokeStyle = "#744fa4";
   ctx.lineWidth = 1.6;
-  for (const p of result.profile.filter((point, index) => index % 4 === 0 && point.direction !== null)) {
+  for (const p of result.row.filter((point, index) => index % 4 === 0 && point.direction !== null)) {
     const angle = p.direction * Math.PI / 180;
-    const dx = 4 * Math.cos(angle);
-    const dy = 4 * Math.sin(angle);
+    ctx.strokeStyle = groupColor(p.group);
     ctx.beginPath();
-    ctx.moveTo(p.x-dx,p.y-dy);
-    ctx.lineTo(p.x+dx,p.y+dy);
+    ctx.moveTo(p.x-4*Math.cos(angle),p.y-4*Math.sin(angle));
+    ctx.lineTo(p.x+4*Math.cos(angle),p.y+4*Math.sin(angle));
     ctx.stroke();
   }
   if (probe) {
@@ -97,8 +101,8 @@ function paintChart() {
   const upper = counts ? Math.max(1,...result.histogram.map((bin) => bin.count)) : 180;
   const xAt = (x) => 51 + (width - 88) * (x - lo) / Math.max(1, hi - lo);
   const yAt = (y) => height - 26 - (height - 46) * y / upper;
-  get("chart-title").textContent = counts ? "全框笔向计数" : "原行方向证据";
-  get("chart-caption").textContent = counts ? "同轴5°箱 · 原像素计数" : "笔向度数 · 原片 X";
+  get("chart-title").textContent = counts ? "全框笔向计数" : "原行两组笔向";
+  get("chart-caption").textContent = counts ? "同轴5°箱 · 原像素计数" : "笔向度数 · 原片 X · 空点为未采用";
   ctx.fillStyle = "#faf8fb";
   ctx.fillRect(0,0,width,height);
   ctx.font = "12px monospace";
@@ -120,18 +124,41 @@ function paintChart() {
       ctx.fillRect(xAt(bin.direction)-5,top,10,yAt(0)-top);
     }
   } else {
-    ctx.fillStyle = "#8d68a9";
-    for (const p of result.profile) {
-      if (p.direction !== null) ctx.fillRect(xAt(p.x),yAt(p.direction),2,2);
+    for (const p of result.row) {
+      if (p.direction === null) continue;
+      ctx.fillStyle = groupColor(p.group);
+      ctx.fillRect(xAt(p.x),yAt(p.direction),2,2);
     }
+    const groups = (result.reading && result.reading.groups) || [];
+    groups.forEach((entry) => {
+      const y = yAt(entry.direction);
+      ctx.strokeStyle = groupColor(entry.group);
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      ctx.moveTo(xAt(lo),y);
+      ctx.lineTo(xAt(hi),y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = groupColor(entry.group);
+      ctx.fillText("组" + entry.group + " " + entry.direction.toFixed(1) + "°", xAt(hi)-72, y-3);
+    });
   }
+}
+
+function axisSeparation(groups) {
+  if (!groups || groups.length < 2) return "—";
+  const gap = Math.abs(groups[0].direction - groups[1].direction) % 180;
+  return Math.min(gap, 180 - gap).toFixed(1);
 }
 
 function pointLabel(point) {
   const evidence = point.direction === null ? "无方向证据" : point.direction.toFixed(2) + "°";
   const strength = point.strength === null ? "—" : point.strength.toFixed(2);
+  const verdict = point.group
+    ? "· 第" + point.group + "组 · 轴向 " + point.axis.toFixed(2) + "° · 轴向差 " + point.offset.toFixed(2) + "°"
+    : "· 未采用" + (point.reason ? "（" + point.reason + "）" : "");
   return "(" + point.x + ", " + point.y + ") · RGB " + point.rgb.join("/") +
-    " · 亮度 " + point.brightness.toFixed(2) + " · 强度 " + strength + " · " + evidence;
+    " · 亮度 " + point.brightness.toFixed(2) + " · 强度 " + strength + " · " + evidence + " " + verdict;
 }
 
 function show() {
@@ -149,12 +176,23 @@ function show() {
   get("probe-y").value = state.probe?.y ?? result.focus;
   get("probe-result").textContent = state.probe ? pointLabel(state.probe) : "选择原片像素";
   const reading = result.reading;
-  get("direction-value").textContent = reading ? reading.direction.toFixed(0) : "—";
-  get("direction-unit").textContent = "°";
+  const pair = get("direction-pair");
+  pair.replaceChildren(...(reading ? reading.groups.map((entry) => {
+    const block = document.createElement("div");
+    const value = document.createElement("strong");
+    value.textContent = entry.direction.toFixed(0);
+    value.style.color = groupColor(entry.group);
+    const label = document.createElement("span");
+    label.textContent = "° 第" + entry.group + "组 · " + entry.points + " 点 · 轴向差≤" +
+      entry.spread.toFixed(1) + "°";
+    block.append(value, label);
+    return block;
+  }) : [Object.assign(document.createElement("strong"), {textContent: "—"})]));
   get("measurement-state").textContent = "原片 Y " + result.focus;
   get("selected-level").textContent = reading
-    ? "主要箱 " + reading.dominant + " 点 · 有证 " + reading.qualified + " / " + reading.samples
-    : "本行没有足够的方向证据";
+    ? "两组相差 " + axisSeparation(reading.groups) + "°，共采用 " +
+      (reading.groups[0].points + reading.groups[1].points) + " / " + reading.candidates + " 个原点"
+    : "本行还没有满足条件的两组笔向";
   get("area-level").textContent = "全框 " + result.qualified + " 个源像素有方向证据";
   for (const [id, filename] of Object.entries({proof: "proof.png", csv: "profile.csv", zip: "observation.zip"})) {
     get(id).href = "/hatchproof" + route("/export/" + filename) + savedQuery();

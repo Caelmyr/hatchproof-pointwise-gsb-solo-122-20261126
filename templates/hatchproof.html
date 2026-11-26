@@ -15,7 +15,7 @@
 </header>
 <main>
   <section class="introduction">
-    <div><h1>原稿排线方向测量</h1><p>从排线原稿照片检查实际局部笔向和测量框的方向分布。</p></div>
+    <div><h1>原稿交叉排线方向测量</h1><p>沿当前截线找两组各有实拍邻点支撑的笔向，保留每点原角度、强度与 RGB。</p></div>
     <div class="top-actions">
       <button id="practice" class="primary" type="button">打开练习排线</button>
       <button id="open-import" type="button">导入原片</button>
@@ -53,9 +53,9 @@
       </section>
       <section class="panel profile">
         <div class="panel-head">
-          <div><h2 id="chart-title">原行方向证据</h2><span id="chart-caption">当前截线 · 笔向角 · 原片 X</span></div>
+          <div><h2 id="chart-title">原行两组笔向</h2><span id="chart-caption">当前截线 · 笔向角 · 原片 X</span></div>
           <div class="modes" role="group" aria-label="当前图表">
-            <button data-chart="profile" aria-pressed="true" type="button">截线证据</button>
+            <button data-chart="profile" aria-pressed="true" type="button">截线归组</button>
             <button data-chart="coverage" aria-pressed="false" type="button">全框方向</button>
           </div>
         </div>
@@ -64,8 +64,8 @@
     </div>
     <aside class="right">
       <section class="panel readout">
-        <div class="panel-head"><h2>当前行主要笔向</h2><span id="measurement-state"></span></div>
-        <div class="direction"><strong id="direction-value">—</strong><span id="direction-unit"></span></div>
+        <div class="panel-head"><h2>当前行两组笔向</h2><span id="measurement-state"></span></div>
+        <div id="direction-pair" class="direction"></div>
         <p id="selected-level"></p><p id="area-level"></p>
       </section>
       <form id="calibration" class="panel settings">
@@ -78,8 +78,9 @@
           <label>上界 Y<input data-setting="top" type="number" step="1" min="0" required></label>
           <label>下界 Y<input data-setting="bottom" type="number" step="1" min="0" required></label>
         </div></fieldset>
-        <fieldset><legend>方向取样阈值</legend><div class="form-grid">
+        <fieldset><legend>方向取样与归组</legend><div class="form-grid">
           <label>最小纹理强度<input data-setting="cutoff" type="number" step="any" min="0.1" max="180" required></label>
+          <label>组内轴向容差 °<input data-setting="tolerance" type="number" step="any" min="0" max="89" required></label>
         </div></fieldset>
         <button id="save" class="primary" type="submit">保存并测量</button>
       </form>

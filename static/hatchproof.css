@@ -56,7 +56,8 @@ h2 { font-size: 15px; font-weight: 700; }
 #probe-result, #measurement-state { color: var(--green); }
 #chart { display: block; width: 100%; height: auto; min-height: 99px; }
 .legend i { display: inline-block; width: 15px; margin-right: 4px; border-top: 2px dashed var(--accent); vertical-align: middle; }
-.direction { display: flex; align-items: baseline; gap: 12px; margin: 0 15px 9px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.direction { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px 22px; margin: 0 15px 9px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.direction > div { display: flex; align-items: baseline; gap: 9px; }
 .direction strong { font-size: 39px; font-variant-numeric: tabular-nums; color: var(--green); line-height: 1; }
 .direction span { font-size: 12px; color: var(--muted); }
 .readout p { padding: 0 15px 12px; }
