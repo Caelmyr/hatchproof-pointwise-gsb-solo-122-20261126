@@ -34,3 +34,14 @@ def pixels(path):
     with Image.open(path) as photo:
         return np.asarray(photo.convert("RGB"))
 
+
+def pixels_and_missing(path):
+    """Return RGB pixels and coordinates that have no source alpha coverage."""
+    with Image.open(path) as photo:
+        has_alpha = photo.mode in {"RGBA", "LA"} or "transparency" in photo.info
+        rgba = np.asarray(photo.convert("RGBA"))
+    missing = set()
+    if has_alpha:
+        missing = {(int(x), int(y)) for y, x in np.argwhere(rgba[:, :, 3] == 0)}
+    return rgba[:, :, :3].copy(), missing
+

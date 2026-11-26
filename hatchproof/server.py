@@ -9,7 +9,8 @@ from flask import Blueprint, jsonify, render_template, request, send_file, url_f
 from image_lab import create_app as preparation_app
 from image_lab.validation import Invalid, integer, object_value
 
-from . import exports, hatch
+from . import exports, hatch, width as width_mod
+from .photo import pixels_and_missing
 from .store import Cards
 
 
@@ -74,6 +75,42 @@ def create_app(directory=None):
         x = integer(request.args.get("x"), "X", 0, card["width"] - 1)
         y = integer(request.args.get("y"), "Y", 0, card["height"] - 1)
         return jsonify(hatch.point(hatch.pixels(cards.photo(key)), x, y, card["settings"]))
+
+    def width_request_payload():
+        if request.method == "GET":
+            return request.args
+        body = request.get_json(silent=True)
+        if isinstance(body, dict):
+            nested = body.get("width") or body.get("measurement") or body.get("query")
+            if isinstance(nested, dict):
+                return {**request.args, **body, **nested}
+            return {**request.args, **body}
+        return {**request.args, **request.form}
+
+    @api.route("/cards/<key>/width", methods=["GET", "POST"])
+    @api.route("/cards/<key>/width/", methods=["GET", "POST"])
+    @api.route("/cards/<key>/stroke-width", methods=["GET", "POST"])
+    @api.route("/cards/<key>/stroke_width", methods=["GET", "POST"])
+    @api.route("/cards/<key>/measure-width", methods=["GET", "POST"])
+    @api.route("/cards/<key>/measure", methods=["GET", "POST"])
+    @api.route("/cards/<key>/width-measurement", methods=["GET", "POST"])
+    @api.route("/cards/<key>/width_measurement", methods=["GET", "POST"])
+    @api.route("/cards/<key>/stroke-width-measurement", methods=["GET", "POST"])
+    @api.route("/cards/<key>/width-measure", methods=["GET", "POST"])
+    @api.route("/cards/<key>/stroke", methods=["GET", "POST"])
+    @api.route("/cards/<key>/measurement/width", methods=["GET", "POST"])
+    @api.route("/cards/<key>/probe/width", methods=["GET", "POST"])
+    def stroke_width(key):
+        payload = width_request_payload()
+        card = cards.read(key, payload.get("revision"))
+        photo_path = cards.photo(key)
+        if not photo_path.is_file():
+            from werkzeug.exceptions import NotFound
+            raise NotFound("原照文件缺失，不能补造框外或缺失像素")
+        image, missing = pixels_and_missing(photo_path)
+        params = width_mod.width_settings(payload, (card["width"], card["height"]))
+        result = width_mod.width_report(image, missing=missing, **params)
+        return jsonify(revision=card["revision"], **result)
 
     @api.get("/cards/<key>/export/profile.csv")
     def profile(key):

@@ -40,6 +40,7 @@
           <div class="modes" role="group" aria-label="原照取样">
             <button id="probe-mode" data-mode="probe" aria-pressed="true" type="button">点读</button>
             <button id="mark-mode" data-mode="mark" aria-pressed="false" type="button">取截线</button>
+            <button id="width-mode" data-mode="width" aria-pressed="false" type="button">量笔宽</button>
           </div>
         </div>
         <div class="camera"><canvas id="capture" aria-label="排线原照，可点击取样或输入原片像素坐标"></canvas></div>
@@ -56,6 +57,7 @@
           <div><h2 id="chart-title">原行方向证据</h2><span id="chart-caption">当前截线 · 笔向角 · 原片 X</span></div>
           <div class="modes" role="group" aria-label="当前图表">
             <button data-chart="profile" aria-pressed="true" type="button">截线证据</button>
+            <button data-chart="width" aria-pressed="false" type="button">斜截笔宽</button>
             <button data-chart="coverage" aria-pressed="false" type="button">全框方向</button>
           </div>
         </div>
@@ -68,6 +70,27 @@
         <div class="direction"><strong id="direction-value">—</strong><span id="direction-unit"></span></div>
         <p id="selected-level"></p><p id="area-level"></p>
       </section>
+      <form id="width-form" class="panel settings width-tool">
+        <div class="panel-head"><div><h2>单笔真实粗细</h2><span>点墨内原点 · 沿笔追踪 · 法线读原像素</span></div></div>
+        <fieldset><legend>原点与笔向 · 原片坐标 / 0°水平</legend><div class="form-grid width-grid">
+          <label>墨内 X<input id="width-x" name="x" aria-label="墨内原点 X" type="number" step="1" min="0" required></label>
+          <label>墨内 Y<input id="width-y" name="y" aria-label="墨内原点 Y" type="number" step="1" min="0" required></label>
+          <label>这条笔的大概方向 °<input id="width-angle" name="angle" aria-label="这条笔的大概方向" type="number" step="any" min="-360" max="360" value="0" required></label>
+          <label>沿笔最多查多远<input id="width-reach" name="reach" aria-label="沿笔最多查多远" type="number" step="1" min="0" max="5200" value="120" required></label>
+          <label>黑墨亮度上限<input id="width-ink" name="ink_limit" aria-label="黑墨亮度上限" type="number" step="any" min="0" max="255" value="150" required></label>
+        </div></fieldset>
+        <button id="measure-width" class="primary" type="submit">测量笔宽 · 查找可量横切</button>
+        <label class="wide" for="width-candidate">可量横切（已按近原点与两侧对比排序）
+          <select id="width-candidate" disabled><option>尚未测量</option></select>
+        </label>
+        <p id="width-result" class="width-result">用“量笔宽”在原片墨内点一下，再填笔向和上限。暗线一中断就停止，不会跳到另一笔。</p>
+        <button id="adopt-width" type="button" hidden>采用此道并用证据图读斜截像素</button>
+        <div id="width-endpoint-actions" class="endpoint-actions" hidden>
+          <button id="width-end-a" type="button">点读墨端 A</button>
+          <button id="width-end-b" type="button">点读墨端 B</button>
+        </div>
+        <p class="width-hint">宽 = 两个真墨端在法线上的投影距离 + 1 px；框外、缺失和任一 RGB 为 0/255 的纸点不补作证据。</p>
+      </form>
       <form id="calibration" class="panel settings">
         <div class="panel-head"><div><h2>框与方向取样</h2><span>原片坐标 · 水平 0°，竖直 90°</span></div></div>
         <label class="wide">卡片名称<input id="name" maxlength="80" required></label>

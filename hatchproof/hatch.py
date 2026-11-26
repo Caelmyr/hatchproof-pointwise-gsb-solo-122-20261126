@@ -106,3 +106,23 @@ def practice():
     draw.text((112,88),"GRAPHITE HATCH CARD / A AND B",fill="#58545a",font=ImageFont.load_default(size=13))
     draw.text((108,428),"SIMULATED DRAWING PHOTO",fill="#ddd1c9",font=ImageFont.load_default(size=12))
     return photo.size,png(photo),cfg
+
+
+def width_report(*args, **kwargs):
+    from .width import width_report as implementation
+    return implementation(*args, **kwargs)
+
+
+def measure_stroke_width(*args, **kwargs):
+    from .width import measure_stroke_width as implementation
+    return implementation(*args, **kwargs)
+
+
+def measure_width(*args, **kwargs):
+    from .width import measure_width as implementation
+    return implementation(*args, **kwargs)
+
+
+def stroke_width(*args, **kwargs):
+    from .width import stroke_width as implementation
+    return implementation(*args, **kwargs)
